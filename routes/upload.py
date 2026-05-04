@@ -1,5 +1,11 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
-from utils.file_handler import read_csv_columns
+from services.data_quality import (
+    count_columns,
+    count_duplicates,
+    count_null_values,
+    count_rows,
+)
+from utils.file_handler import read_csv_dataframe
 
 router = APIRouter(prefix="/upload", tags=["upload"])
 
@@ -10,8 +16,14 @@ async def upload_csv(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Uploaded file must be a CSV")
 
     try:
-        columns = await read_csv_columns(file)
+        dataframe = await read_csv_dataframe(file)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
-    return {"columns": columns}
+    return {
+        "rows": count_rows(dataframe),
+        "columns": count_columns(dataframe),
+        "column_names": dataframe.columns.tolist(),
+        "null_values": count_null_values(dataframe),
+        "duplicate_rows": count_duplicates(dataframe),
+    }
