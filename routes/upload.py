@@ -6,6 +6,7 @@ from services.data_quality import (
     count_rows,
 )
 from utils.file_handler import read_csv_dataframe
+from app.storage import store_last_result
 
 router = APIRouter(prefix="/upload", tags=["upload"])
 
@@ -20,10 +21,12 @@ async def upload_csv(file: UploadFile = File(...)):
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
-    return {
+    result = {
         "rows": count_rows(dataframe),
         "columns": count_columns(dataframe),
         "column_names": dataframe.columns.tolist(),
         "null_values": count_null_values(dataframe),
         "duplicate_rows": count_duplicates(dataframe),
     }
+    store_last_result(result)
+    return result
