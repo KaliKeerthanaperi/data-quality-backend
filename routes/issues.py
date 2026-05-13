@@ -15,4 +15,5 @@ async def get_issues():
     return {
         "null_values": result.get("null_values"),
         "duplicate_rows": result.get("duplicate_rows"),
+        "advanced_validation": result.get("advanced_validation"),
     }
