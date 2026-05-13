@@ -5,6 +5,7 @@ from services.data_quality import (
     count_null_values,
     count_rows,
 )
+from services.validation import advanced_validation
 from utils.file_handler import read_csv_dataframe
 from app.storage import store_last_result
 
@@ -27,6 +28,7 @@ async def upload_csv(file: UploadFile = File(...)):
         "column_names": dataframe.columns.tolist(),
         "null_values": count_null_values(dataframe),
         "duplicate_rows": count_duplicates(dataframe),
+        "advanced_validation": advanced_validation(dataframe),
     }
     store_last_result(result)
     return result
