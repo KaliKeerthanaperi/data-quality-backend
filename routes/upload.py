@@ -14,6 +14,9 @@ router = APIRouter(prefix="/upload", tags=["upload"])
 
 @router.post("/csv")
 async def upload_csv(file: UploadFile = File(...)):
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="No file provided")
+
     if file.content_type not in ["text/csv", "application/vnd.ms-excel", "application/csv"]:
         raise HTTPException(status_code=400, detail="Uploaded file must be a CSV")
 
@@ -21,14 +24,20 @@ async def upload_csv(file: UploadFile = File(...)):
         dataframe = await read_csv_dataframe(file)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to read the uploaded file")
 
-    result = {
-        "rows": count_rows(dataframe),
-        "columns": count_columns(dataframe),
-        "column_names": dataframe.columns.tolist(),
-        "null_values": count_null_values(dataframe),
-        "duplicate_rows": count_duplicates(dataframe),
-        "advanced_validation": advanced_validation(dataframe),
-    }
+    try:
+        result = {
+            "rows": count_rows(dataframe),
+            "columns": count_columns(dataframe),
+            "column_names": dataframe.columns.tolist(),
+            "null_values": count_null_values(dataframe),
+            "duplicate_rows": count_duplicates(dataframe),
+            "advanced_validation": advanced_validation(dataframe),
+        }
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to analyse the uploaded file")
+
     store_last_result(result)
     return result
